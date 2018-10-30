@@ -30,8 +30,8 @@ argparser.add_argument('from_dir',
     help='directory the images are in')
 
 #todo: will move all this to config
-base = '/Users/dorotka/Pictures/Photos Library.photoslibrary/Masters/'
-video_dir = '/Users/dorotka/Movies'
+base = 'base_path' # for photos
+video_dir = 'movies_path' # for movies
 
 
 def moveFiles(worklist, from_dir):
