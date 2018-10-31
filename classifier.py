@@ -24,7 +24,6 @@ import subprocess
 import datetime
 
 
-
 argparser = ArgumentParser()
 argparser.add_argument('from_dir',
     help='directory the images are in')
@@ -59,11 +58,9 @@ def moveFiles(worklist, from_dir):
             print("File already exists")
             continue
         rename(path.join(from_dir, filename), path.join(to_dir, filename))
-        # rename(path.join(from_dir, filename), path.join(from_dir, "_bak_"+filename))
-        # remove(path.join(from_dir, "_bak_"+filename))
         print("Moved ", path.join(from_dir, filename))
+        # todo: remove break after more testing
         break
-        # print(to_dir, '\n')
 
 
 
@@ -111,20 +108,10 @@ def main():
         stderr.write('from_dir is required!')
     worklist = set()
     pics = path.join(base, args.from_dir)
-    # pics = fsencode(pics)
-    # use ll command instead and separate the date
-    # for file in listdir(pics):
-    #     filename = fsdecode(file)
-    #     print(filename, " ")
-    #     completed = subprocess.run(['stat', filename], stdout=subprocess.PIPE, universal_newlines=True, cwd=pics)
-    #     lines_str = str(completed.stdout)
-    #     print(lines_str)
     completed = subprocess.run(['ls', '-lUh'], stdout=subprocess.PIPE, universal_newlines=True, cwd=pics)
-    # completed = subprocess.run(['ls', '-lR', '|', 'akw', '{\'print $5" "$6" "$7" "$8" "$9\'}'], stdout=subprocess.PIPE, shell=True, universal_newlines=True, cwd=pics)
     lines_str = str(completed.stdout)
     lines = lines_str.split('\n')
     dir_date = get_dir_date(pics)
-    # print(dir_date.month)
     size_regex = '[0-9]+(.[0-9]+)?(M|K|B|G)'
     for line in lines:
         size_pattern = re.compile(size_regex, re.IGNORECASE)
