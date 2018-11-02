@@ -44,13 +44,10 @@ def moveFiles(worklist, from_dir):
         year = file_date.year
         month = file_date.strftime('%m')
         day = file_date.day
-        # print(month)
         to_dir = path.join(base, str(year), month, str(day))
         to = Path(to_dir)
         to_f = path.join(to_dir, filename)
         to_file = Path(to_f)
-        # print('to.isDir', to.is_dir())
-        # print('to.isFile', to_file.is_file())
         if not to.is_dir():
             makedirs(to_dir)
             print("made ", to_dir)
@@ -104,7 +101,7 @@ def get_meta_date(meta):
 
 def check_files(from_dir, dir_date):
     worklist = set()
-    pics = path.join(base, from_dir) # needs to change for recursive
+    pics = path.join(base, from_dir) # todo: needs to change for recursive
     completed = subprocess.run(['ls', '-lUh'], stdout=subprocess.PIPE, universal_newlines=True, cwd=pics)
     lines_str = str(completed.stdout)
     lines = lines_str.split('\n')
@@ -117,7 +114,6 @@ def check_files(from_dir, dir_date):
             print('short list')
             continue
         meta = temp[-1]
-        # print(meta, '\n')
         file_date = get_meta_date(meta) if dir_date is None else dir_date
         filename = re.split(' +', meta.strip())[-1]
         # if path.isdir(path.join(pics, filename)): # if a directory, recurse
