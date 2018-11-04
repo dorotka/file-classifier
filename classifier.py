@@ -70,9 +70,10 @@ def convert_date_to_dir(date):
     year = date.year
     month = date.strftime('%m')
     day = date.day
+    dir_str = path.join(base, str(year), month, str(day))
     dirs = {
-        'to_dir' : path.join(base, str(year), month, str(day)),
-        'to_dir_path' : Path(path.join(base, str(year), month, str(day)))
+        'to_dir' : dir_str,
+        'to_dir_path' : Path(dir_str)
     }
     return dirs
 
