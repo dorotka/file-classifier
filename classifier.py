@@ -25,6 +25,7 @@ from os import fsencode, listdir, fsdecode, path, rename, makedirs, remove
 from pathlib import Path
 import re
 import subprocess
+import configparser
 import datetime
 
 
@@ -32,10 +33,11 @@ argparser = ArgumentParser()
 argparser.add_argument('from_dir',
     help='directory the images are in')
 
-#todo: will move all this to config
-base = '/Users/dorotka/Pictures/Photos Library.photoslibrary/Masters/'
-video_dir = '/Users/dorotka/Movies'
-size_regex = '[0-9]+(.[0-9]+)?(M|K|B|G)'
+config = configparser.ConfigParser()
+config.read('config.ini')
+base = config['DEFAULT']['BASE'] # base dir for photos
+video_dir = config['DEFAULT']['VIDEO_DIR'] # base dir for movies
+size_regex = config['DEFAULT']['SIZE_REGEX'] # regex for size syntax
 
 
 def moveFiles(worklist, from_dir):
@@ -118,15 +120,12 @@ def create_worklist(from_dir, dir_date):
     lines = lines_str.split('\n')
     dir_date = get_dir_date(pics) if dir_date is None else dir_date
     for line in lines:
-        print(line)
         tokens = split_on_size(line)
-        print(tokens)
         if len(tokens) < 2:
             print('short list')
             continue
         meta = tokens[-1]
         file_date = get_meta_date(meta)
-        print(file_date, dir_date)
         filename = re.split(' +', meta.strip())[-1]
         # if path.isdir(path.join(pics, filename)): # if a directory, recurse
         #     pass
