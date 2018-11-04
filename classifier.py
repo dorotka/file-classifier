@@ -48,26 +48,33 @@ def moveFiles(worklist, from_dir):
     for file in worklist:
         filename = file[0]
         file_date = file[1]
-        year = file_date.year
-        month = file_date.strftime('%m')
-        day = file_date.day
-        to_dir = path.join(base, str(year), month, str(day))
-        to_d = Path(to_dir)
-        to_f = path.join(to_dir, filename)
-        to_file = Path(to_f)
-        if not to_d.is_dir():
-            makedirs(to_dir)
-            print("made ", to_dir)
-        if to_file.is_file():
+        dirs = convert_date_to_dir(file_date)
+        to_file = path.join(dirs['to_dir'], filename)
+        to_file_path = Path(to_file)
+        if not dirs['to_dir_path'].is_dir():
+            makedirs(dirs['to_dir'])
+            print("made ", dirs['to_dir'])
+        if to_file_path.is_file():
             print("File already exists", filename)
             #todo: will have to deal with it to somehow mark them otherwise we will always be going though those files and never moving them
             #todo: will need to figure out whether really the same, then remove from source, if not rename and move
             continue
-        rename(path.join(from_dir, filename), path.join(to_dir, filename))
+        rename(path.join(from_dir, filename), path.join(dirs['to_dir'], filename))
         #todo: remove from worklist after successful move
-        print("Moved ", path.join(from_dir, filename), "to ", to_dir)
+        print("Moved ", path.join(from_dir, filename), "to ", dirs['to_dir'])
         # todo: remove break after more testing
         break
+
+
+def convert_date_to_dir(date):
+    year = date.year
+    month = date.strftime('%m')
+    day = date.day
+    dirs = {
+        'to_dir' : path.join(base, str(year), month, str(day)),
+        'to_dir_path' : Path(path.join(base, str(year), month, str(day)))
+    }
+    return dirs
 
 
 def get_dir_date(dir):
@@ -99,22 +106,25 @@ def get_meta_date(meta):
     return datetime.datetime.strptime(date_str, '%b %d %Y')
 
 
+def get_filename(s):
+    return re.split(' +', s.strip())[-1]
+
+
 def split_on_size(line):
     size_pattern = re.compile(size_regex, re.IGNORECASE)
     return re.split(size_pattern, line)
 
 
-def create_worklist(from_dir, dir_date):
+def create_worklist(pics, dir_date):
     """
     Goes over directories and adds files to the worklist if in a wrong place.
     :return:
     """
     # todo: in order not to go over moved files when we do recurvide over inner directories over different days,
     # we should first get all the files in the worklist over different directories, and then move in separate method
+    # todo: could be a map as {to_date: [files]}
     worklist = set()
-    pics = path.join(base, from_dir)  # todo: needs to change for recursive
     print(pics)
-    # TODO: check if directory exists?
     completed = subprocess.run(['ls', '-lUh'], stdout=subprocess.PIPE, universal_newlines=True, cwd=pics)
     lines_str = str(completed.stdout)
     lines = lines_str.split('\n')
@@ -126,7 +136,7 @@ def create_worklist(from_dir, dir_date):
             continue
         meta = tokens[-1]
         file_date = get_meta_date(meta)
-        filename = re.split(' +', meta.strip())[-1]
+        filename = get_filename(meta)
         # if path.isdir(path.join(pics, filename)): # if a directory, recurse
         #     pass
         if file_date != dir_date:
@@ -135,20 +145,21 @@ def create_worklist(from_dir, dir_date):
     return worklist
 
 
-def classify_files(from_dir, worklist):
+def classify_files(pics, worklist):
     """
     Gets the worklist of the files to move and moves them.
-    It will also perform a "check scan" after moving in the future.
+    It will also perform a "check scan" after moving files in the future.
     :return:
     """
-    pics = path.join(base, from_dir)
     moveFiles(worklist, pics)
 
 
 def check_files(from_dir):
-    worklist = create_worklist(from_dir, None)
-    classify_files(from_dir, worklist)
-    stdout.write('DONE.')
+    pics = path.join(base, from_dir)
+    # TODO: check if directory exists?
+    worklist = create_worklist(pics, None)
+    classify_files(pics, worklist)
+    stdout.write('DONE')
 
 
 def main():
