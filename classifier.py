@@ -13,6 +13,10 @@ Features to come:
 - Allow to select month or year not just day folders (1)
 - Go over files in the nested folder (0)
 - While confirming, if the user does not accept all, allow to exclude specific files from the list.
+- Scan functionality: pick a year or a month directory, the scan will go over all the files and folders inside
+    and will give you a list of files that are in wrong directories. Maybe just print to console if certain size, if
+    larger than write to a file.
+- Scan after work done: Once directory is classified, do a scan of that directory.
 """
 
 from argparse import ArgumentParser
@@ -29,8 +33,9 @@ argparser.add_argument('from_dir',
     help='directory the images are in')
 
 #todo: will move all this to config
-base = 'base_path' # for photos
-video_dir = 'movies_path' # for movies
+base = '/Users/dorotka/Pictures/Photos Library.photoslibrary/Masters/'
+video_dir = '/Users/dorotka/Movies'
+size_regex = '[0-9]+(.[0-9]+)?(M|K|B|G)'
 
 
 def moveFiles(worklist, from_dir):
@@ -45,29 +50,22 @@ def moveFiles(worklist, from_dir):
         month = file_date.strftime('%m')
         day = file_date.day
         to_dir = path.join(base, str(year), month, str(day))
-        to = Path(to_dir)
+        to_d = Path(to_dir)
         to_f = path.join(to_dir, filename)
         to_file = Path(to_f)
-        if not to.is_dir():
+        if not to_d.is_dir():
             makedirs(to_dir)
             print("made ", to_dir)
         if to_file.is_file():
-            print("File already exists")
+            print("File already exists", filename)
+            #todo: will have to deal with it to somehow mark them otherwise we will always be going though those files and never moving them
+            #todo: will need to figure out whether really the same, then remove from source, if not rename and move
             continue
         rename(path.join(from_dir, filename), path.join(to_dir, filename))
+        #todo: remove from worklist after successful move
         print("Moved ", path.join(from_dir, filename), "to ", to_dir)
         # todo: remove break after more testing
         break
-
-
-
-def ask_confirmation(worklist):
-    """
-    print files to be moved and directories. Ask for confirmation -- if given, remove the backed files. Otherwise roll back.
-    :param worklist:
-    :return:
-    """
-    pass
 
 
 def get_dir_date(dir):
@@ -99,29 +97,58 @@ def get_meta_date(meta):
     return datetime.datetime.strptime(date_str, '%b %d %Y')
 
 
-def check_files(from_dir, dir_date):
+def split_on_size(line):
+    size_pattern = re.compile(size_regex, re.IGNORECASE)
+    return re.split(size_pattern, line)
+
+
+def create_worklist(from_dir, dir_date):
+    """
+    Goes over directories and adds files to the worklist if in a wrong place.
+    :return:
+    """
+    # todo: in order not to go over moved files when we do recurvide over inner directories over different days,
+    # we should first get all the files in the worklist over different directories, and then move in separate method
     worklist = set()
-    pics = path.join(base, from_dir) # todo: needs to change for recursive
+    pics = path.join(base, from_dir)  # todo: needs to change for recursive
+    print(pics)
+    # TODO: check if directory exists?
     completed = subprocess.run(['ls', '-lUh'], stdout=subprocess.PIPE, universal_newlines=True, cwd=pics)
     lines_str = str(completed.stdout)
     lines = lines_str.split('\n')
-    dir_date = get_dir_date(pics)
-    size_regex = '[0-9]+(.[0-9]+)?(M|K|B|G)'
+    dir_date = get_dir_date(pics) if dir_date is None else dir_date
     for line in lines:
-        size_pattern = re.compile(size_regex, re.IGNORECASE)
-        temp = re.split(size_pattern, line)
-        if len(temp) < 2:
+        print(line)
+        tokens = split_on_size(line)
+        print(tokens)
+        if len(tokens) < 2:
             print('short list')
             continue
-        meta = temp[-1]
-        file_date = get_meta_date(meta) if dir_date is None else dir_date
+        meta = tokens[-1]
+        file_date = get_meta_date(meta)
+        print(file_date, dir_date)
         filename = re.split(' +', meta.strip())[-1]
         # if path.isdir(path.join(pics, filename)): # if a directory, recurse
         #     pass
         if file_date != dir_date:
             worklist.add((filename, file_date))
     print(len(worklist))
+    return worklist
+
+
+def classify_files(from_dir, worklist):
+    """
+    Gets the worklist of the files to move and moves them.
+    It will also perform a "check scan" after moving in the future.
+    :return:
+    """
+    pics = path.join(base, from_dir)
     moveFiles(worklist, pics)
+
+
+def check_files(from_dir):
+    worklist = create_worklist(from_dir, None)
+    classify_files(from_dir, worklist)
     stdout.write('DONE.')
 
 
