@@ -24,7 +24,7 @@ class TestClassifierMethods(unittest.TestCase):
         self.directory_incomplete = 'some/folder/structure/2018/02'
         self.from_dir = config['TEST']['FROM_DIR'] # base dir for test photos
         self.base = config['DEFAULT']['BASE']
-        # move file test
+        # move file success
         to_date = datetime.datetime(2018, 9, 23)
         self.move_filename = 'DSC_0688.JPG'
         self.worklist = set()
@@ -89,6 +89,8 @@ class TestClassifierMethods(unittest.TestCase):
         """Test moving file when the given file already exists in the to_dir.
         Currently, it will abort the move without any additional checks."""
         pass
+
+    #todo: test that single digit months and days are saved as two digit folders like 6 -> 06
 
     def tearDown(self):
         pass
