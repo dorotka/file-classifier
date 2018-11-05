@@ -85,6 +85,7 @@ def get_dir_date(dir):
     :return: directory date
     """
     folders = path.normpath(dir).split(path.sep)
+    #todo: figure out if the folder provides full date or beyond
     year = folders[-3]
     month = folders[-2]
     day = folders[-1]
@@ -116,7 +117,7 @@ def split_on_size(line):
     return re.split(size_pattern, line)
 
 
-def create_worklist(pics, dir_date):
+def create_worklist(pics, dir_date, worklist):
     """
     Goes over directories and adds files to the worklist if in a wrong place.
     :return:
@@ -124,12 +125,10 @@ def create_worklist(pics, dir_date):
     # todo: in order not to go over moved files when we do recurvide over inner directories over different days,
     # we should first get all the files in the worklist over different directories, and then move in separate method
     # todo: could be a map as {to_date: [files]}
-    worklist = set()
     print(pics)
     completed = subprocess.run(['ls', '-lUh'], stdout=subprocess.PIPE, universal_newlines=True, cwd=pics)
     lines_str = str(completed.stdout)
     lines = lines_str.split('\n')
-    dir_date = get_dir_date(pics) if dir_date is None else dir_date
     for line in lines:
         tokens = split_on_size(line)
         if len(tokens) < 2:
@@ -158,7 +157,9 @@ def classify_files(pics, worklist):
 def check_files(from_dir):
     pics = path.join(base, from_dir)
     # TODO: check if directory exists?
-    worklist = create_worklist(pics, None)
+    dir_date = get_dir_date(pics)
+    worklist = set()
+    create_worklist(pics, dir_date, worklist)
     classify_files(pics, worklist)
     stdout.write('DONE')
 
