@@ -7,11 +7,8 @@ It gets data on all the files, and if a file does not belong in the given month/
 It assumes the following folder strucrue: year/month/day.
 
 Features to come:
-- distinguishing between video, photo and other extensions, (2)
 - Configurable folder structure,
 - Check if exact file exists before moving over -- not just name but size and date modified
-- Allow to select month or year not just day folders (1)
-- Go over files in the nested folder (0)
 - While confirming, if the user does not accept all, allow to exclude specific files from the list.
 - Scan functionality: pick a year or a month directory, the scan will go over all the files and folders inside
     and will give you a list of files that are in wrong directories. Maybe just print to console if certain size, if
@@ -69,7 +66,7 @@ def moveFiles(worklist, from_dir):
 def convert_date_to_dir(date):
     year = date.year
     month = date.strftime('%m')
-    day = date.day
+    day = date.strftime('%d')
     dir_str = path.join(base, str(year), month, str(day))
     dirs = {
         'to_dir' : dir_str,
