@@ -35,6 +35,18 @@ config.read('config.ini')
 base = config['DEFAULT']['BASE'] # base dir for photos
 video_dir = config['DEFAULT']['VIDEO_DIR'] # base dir for movies
 size_regex = config['DEFAULT']['SIZE_REGEX'] # regex for size syntax
+SUMMARY_LIMIT = 10
+
+
+def print_summary(worklist):
+    print("SUMMARY")
+    print("Moved", len(worklist), "files.")
+    if len(worklist) > SUMMARY_LIMIT:
+        pass
+        # todo: save summary in a file
+    else:
+        for item in worklist:
+            print(item[0], "was moved to ", item[1])
 
 
 def moveFiles(worklist, from_dir):
@@ -59,8 +71,6 @@ def moveFiles(worklist, from_dir):
         rename(path.join(from_dir, filename), path.join(dirs['to_dir'], filename))
         #todo: remove from worklist after successful move
         print("Moved ", path.join(from_dir, filename), "to ", dirs['to_dir'])
-        # todo: remove break after more testing
-        break
 
 
 def convert_date_to_dir(date):
@@ -149,6 +159,7 @@ def classify_files(pics, worklist):
     :return:
     """
     moveFiles(worklist, pics)
+    print_summary(worklist)
 
 
 def check_files(from_dir):
