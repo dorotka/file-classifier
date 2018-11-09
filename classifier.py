@@ -8,12 +8,7 @@ It assumes the following folder strucrue: year/month/day.
 
 Features to come:
 - Configurable folder structure,
-- Check if exact file exists before moving over -- not just name but size and date modified
 - While confirming, if the user does not accept all, allow to exclude specific files from the list.
-- Scan functionality: pick a year or a month directory, the scan will go over all the files and folders inside
-    and will give you a list of files that are in wrong directories. Maybe just print to console if certain size, if
-    larger than write to a file.
-- Scan after work done: Once directory is classified, do a scan of that directory.
 """
 
 from argparse import ArgumentParser
@@ -24,6 +19,8 @@ import re
 import subprocess
 import configparser
 import datetime
+import json
+import time
 
 
 argparser = ArgumentParser()
@@ -35,15 +32,16 @@ config.read('config.ini')
 base = config['DEFAULT']['BASE'] # base dir for photos
 video_dir = config['DEFAULT']['VIDEO_DIR'] # base dir for movies
 size_regex = config['DEFAULT']['SIZE_REGEX'] # regex for size syntax
-SUMMARY_LIMIT = 10
+SUMMARY_PRINT_LIMIT = 50
 
 
-def print_summary(worklist):
+def print_summary(worklist, dir):
     print("SUMMARY")
     print("Moved", len(worklist), "files.")
-    if len(worklist) > SUMMARY_LIMIT:
-        pass
-        # todo: save summary in a file
+    if len(worklist) > SUMMARY_PRINT_LIMIT:
+        name = 'moved_' + str(time.time()) + '.json'
+        serl = ["Moved " + x[0] + " to " + str(convert_date_to_dir(x[1])['to_dir']) for x in worklist]
+        save_in_file(serl, name, dir)
     else:
         for item in worklist:
             print(item[0], "was moved to ", item[1])
@@ -159,7 +157,7 @@ def classify_files(pics, worklist):
     :return:
     """
     moveFiles(worklist, pics)
-    print_summary(worklist)
+    print_summary(worklist, '.')
 
 
 def check_files(from_dir):
@@ -170,6 +168,23 @@ def check_files(from_dir):
     create_worklist(pics, dir_date, worklist)
     classify_files(pics, worklist)
     stdout.write('DONE')
+
+
+def save_in_file(data, name, directory):
+    """
+    :param data: data to be saved
+    :param name: file name with extension
+    :param directory: directory to save file in
+    """
+    out_dir = directory
+    makedirs(out_dir, exist_ok=True)
+    try:
+        with open(path.join(out_dir, name), 'w') as f:
+            json.dump(data, f, sort_keys=True, indent=2)
+    except Exception as e:
+        stderr.write('E: error while trying to write the file: {}/{}\n'.format(directory, name))
+        print(e)
+    # logging.info('Saved file {}/{}\n'.format(directory, name))
 
 
 def main():
